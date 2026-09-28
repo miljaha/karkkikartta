@@ -1,5 +1,6 @@
 from flask import Flask
 from models import db
+from prices import price_summary
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///candy.db'
