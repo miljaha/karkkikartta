@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Karkille.fi</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #map { height: 100vh; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([60.1699, 24.9384], 12); // Helsinki
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    fetch('/api/stores')
+      .then(response => response.json())
+      .then(stores => {
+        stores.forEach(store => {
+          const priceText = store.is_campaign
+            ? `${store.price.toFixed(2)} € <b>(campaign!)</b>`
+            : `${store.price.toFixed(2)} €`;
+          const memberText = store.member_price
+            ? `<br>Member price: ${store.member_price.toFixed(2)} €`
+            : '';
+
+          L.marker([store.latitude, store.longitude])
+            .addTo(map)
+            .bindPopup(`
+              <b>${store.name}</b><br>
+              ${store.candy_provider || ''}<br>
+              ${priceText}${memberText}
+            `);
+        });
+      });
+  </script>
+</body>
+</html>

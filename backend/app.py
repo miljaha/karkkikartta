@@ -1,5 +1,5 @@
-from flask import Flask, jsonify
-from models import db, Store
+from flask import Flask, jsonify, render_template
+from models import Store, db
 from prices import price_summary
 
 app = Flask(__name__)
@@ -9,7 +9,7 @@ db.init_app(app)
 
 @app.route("/")
 def home():
-    return "Hello, candy lover!\n🍬🍫🍫\nSomething sweet coming soon!"
+    return render_template("index.html")
 
 
 @app.route("/api/stores")
