@@ -24,21 +24,75 @@
       .then(response => response.json())
       .then(stores => {
         stores.forEach(store => {
-          const priceText = store.is_campaign
-            ? `${store.price.toFixed(2)} € <b>(campaign!)</b>`
-            : `${store.price.toFixed(2)} €`;
-          const memberText = store.member_price
-            ? `<br>Member price: ${store.member_price.toFixed(2)} €`
-            : '';
+  const priceText = store.is_campaign
+    ? `${store.price.toFixed(2)} € <b>(campaign!)</b>`
+    : `${store.price.toFixed(2)} €`;
+  const memberText = store.member_price
+    ? `<br>Member price: ${store.member_price.toFixed(2)} €`
+    : '';
 
-          L.marker([store.latitude, store.longitude])
-            .addTo(map)
-            .bindPopup(`
-              <b>${store.name}</b><br>
-              ${store.candy_provider || ''}<br>
-              ${priceText}${memberText}
-            `);
+  const popupContent = `
+    <b>${store.name}</b><br>
+    ${store.candy_provider || ''}<br>
+    ${priceText}${memberText}
+    <hr>
+    <form id="update-form-${store.id}">
+      <label><input type="radio" name="type" value="base" checked> Base price</label>
+      <label><input type="radio" name="type" value="campaign"> Campaign price</label><br>
+      <input type="number" step="0.01" name="price" placeholder="Price (€)" required><br>
+      <div class="campaign-fields" style="display:none;">
+        Start: <input type="date" name="start_date"><br>
+        End: <input type="date" name="end_date"><br>
+        <label><input type="checkbox" name="is_chain_wide"> Chain-wide</label><br>
+        <label><input type="checkbox" name="requires_membership"> Requires membership</label><br>
+      </div>
+      <button type="submit">Update price</button>
+    </form>
+  `;
+
+  const marker = L.marker([store.latitude, store.longitude])
+    .addTo(map)
+    .bindPopup(popupContent);
+
+  marker.once('popupopen', () => {
+    const form = document.getElementById(`update-form-${store.id}`);
+    const campaignFields = form.querySelector('.campaign-fields');
+
+    form.querySelectorAll('input[name="type"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        campaignFields.style.display = radio.value === 'campaign' ? 'block' : 'none';
+      });
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const body = {
+        type: formData.get('type'),
+        price: parseFloat(formData.get('price')),
+        start_date: formData.get('start_date'),
+        end_date: formData.get('end_date'),
+        is_chain_wide: formData.get('is_chain_wide') === 'on',
+        requires_membership: formData.get('requires_membership') === 'on',
+      };
+
+      fetch(`/api/stores/${store.id}/update-price`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.error) {
+            alert(result.error);
+          } else {
+            alert('Price updated!');
+            location.reload();
+          }
         });
+    });
+  });
+});
       });
   </script>
 </body>
