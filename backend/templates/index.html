@@ -20,6 +20,26 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    function makeIcon(color) {
+      return L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="
+          background-color: ${color};
+          width: 20px;
+          height: 20px;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 2px solid white;
+          box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        "></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 20],
+      });
+    }
+
+    const normalIcon = makeIcon('#3388ff');   // Leaflet's default blue
+    const campaignIcon = makeIcon('#ff3333'); // red for active campaigns
+
     fetch('/api/stores')
       .then(response => response.json())
       .then(stores => {
@@ -35,7 +55,8 @@
       <b>${store.name}</b><br>
       ${store.candy_provider || ''}<br>
       ${store.address || ''}<br>
-      ${priceHtml}${memberHtml}
+      ${priceHtml}${memberHtml}<br>
+      ${'Wrong price? Update it below!'}
       <hr>
 
     <form id="update-form-${store.id}">
@@ -52,7 +73,8 @@
     </form>
   `;
 
-  const marker = L.marker([store.latitude, store.longitude])
+  const marker = L.marker([store.latitude, store.longitude], {
+    icon: (store.is_campaign || store.member_price) ? campaignIcon : normalIcon})
     .addTo(map)
     .bindPopup(popupContent);
 
