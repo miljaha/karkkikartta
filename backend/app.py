@@ -83,6 +83,7 @@ def api_stores():
                 "longitude": store.longitude,
                 "chain": store.chain,
                 "candy_provider": store.candy_provider,
+                "base_price": store.base_price,
                 "price": summary["price"],
                 "is_campaign": summary["is_campaign"],
                 "member_price": summary["member_price"],
