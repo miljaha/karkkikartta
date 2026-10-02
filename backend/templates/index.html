@@ -44,9 +44,17 @@
       .then(response => response.json())
       .then(stores => {
         stores.forEach(store => {
-    const priceHtml = store.is_campaign
-      ? `<s>${store.base_price.toFixed(2)} €</s> <b>${store.price.toFixed(2)} €</b> (campaign!, no membership needed)`
-      : `${store.base_price.toFixed(2)} € (no membership needed)`;
+    let priceHtml;
+      if (store.is_campaign) {
+        const basePart = store.base_price !== null
+          ? `<s>${store.base_price.toFixed(2)} €</s> `
+          : '';
+        priceHtml = `${basePart}<b>${store.price.toFixed(2)} €</b> (campaign!, no membership needed)`;
+      } else if (store.price !== null) {
+        priceHtml = `${store.price.toFixed(2)} € (no membership needed)`;
+      } else {
+        priceHtml = `<i>No price yet — be the first to add one!</i>`;
+      }
     const memberHtml = store.member_price
       ? `<br>${store.member_price.toFixed(2)} € <i>(requires membership)</i>`
       : '';
