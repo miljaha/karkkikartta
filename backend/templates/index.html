@@ -7,6 +7,13 @@
   <style>
     body { margin: 0; font-family: sans-serif; }
     #map { height: 100vh; width: 100%; }
+
+  .custom-marker svg {
+  transform: rotate(-45deg);
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.45));
+  transition: transform 0.12s;
+  }
+  .custom-marker:hover svg { transform: rotate(-45deg) scale(1.2); }
     #info-button {
       position: fixed; top: 12px; right: 12px; z-index: 1100;
       width: 40px; height: 40px; border-radius: 50%;
@@ -40,9 +47,9 @@
 
     <b>Pin colors</b>
     <p>
-      <span class="legend-dot" style="background:#3388ff"></span>No active campaign<br>
-      <span class="legend-dot" style="background:#ff3333"></span>Active campaign (with or without a membership card)<br>
-      <span class="legend-dot" style="background:#999999"></span>Store has no irtokarkit
+      <span class="legend-dot" style="background:#89CFF0"></span>No active campaign<br>
+      <span class="legend-dot" style="background:#F7A8C4"></span>Active campaign (with or without a membership card)<br>
+      <span class="legend-dot" style="background:#A9A9B3"></span>Store has no irtokarkit
     </p>
 
     <b>Using the map</b>
@@ -85,23 +92,22 @@
     function makeIcon(color) {
       return L.divIcon({
         className: 'custom-marker',
-        html: `<div style="
-          background-color: ${color};
-          width: 20px;
-          height: 20px;
-          border-radius: 50% 50% 50% 0;
-          transform: rotate(-45deg);
-          border: 2px solid white;
-          box-shadow: 0 0 2px rgba(0,0,0,0.5);
-        "></div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 20],
+        html: `
+          <svg width="40" height="28" viewBox="0 0 36 26" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="2,4 11,13 2,22" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+            <polygon points="34,4 25,13 34,22" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+            <circle cx="18" cy="13" r="10" fill="${color}" stroke="white" stroke-width="2"/>
+            <path d="M11.5 9.5 Q18 4.5 24.5 9.5" stroke="white" stroke-width="2" fill="none" opacity="0.65" stroke-linecap="round"/>
+          </svg>`,
+        iconSize: [40, 28],
+        iconAnchor: [20, 14],
+        popupAnchor: [0, -16],
       });
     }
 
-    const normalIcon = makeIcon('#3388ff');   // Leaflet's default blue
-    const campaignIcon = makeIcon('#ff3333'); // red for active campaigns
-    const noCandyIcon = makeIcon('#999999');  // store has no loose candy
+    const normalIcon = makeIcon('#89CFF0');   // light blue
+    const campaignIcon = makeIcon('#F7A8C4'); // pink
+    const noCandyIcon = makeIcon('#A9A9B3');  // gray
 
     fetch('/api/stores')
       .then(response => response.json())
