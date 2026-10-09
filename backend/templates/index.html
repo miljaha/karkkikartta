@@ -39,55 +39,89 @@
 
     const normalIcon = makeIcon('#3388ff');   // Leaflet's default blue
     const campaignIcon = makeIcon('#ff3333'); // red for active campaigns
+    const noCandyIcon = makeIcon('#999999');  // store has no loose candy
 
     fetch('/api/stores')
       .then(response => response.json())
       .then(stores => {
         stores.forEach(store => {
-    let priceHtml;
-      if (store.is_campaign) {
-        const basePart = store.base_price !== null
-          ? `<s>${store.base_price.toFixed(2)} €</s> `
-          : '';
-        priceHtml = `${basePart}<b>${store.price.toFixed(2)} €</b> (campaign!, no membership needed)`;
-      } else if (store.price !== null) {
-        priceHtml = `${store.price.toFixed(2)} € (no membership needed)`;
-      } else {
-        priceHtml = `<i>No price yet — be the first to add one!</i>`;
-      }
-    const memberHtml = store.member_price
-      ? `<br>${store.member_price.toFixed(2)} € <i>(requires membership)</i>`
+  let priceHtml;
+  if (store.is_campaign) {
+    const basePart = store.base_price !== null
+      ? `<s>${store.base_price.toFixed(2)} €</s> `
       : '';
+    priceHtml = `${basePart}<b>${store.price.toFixed(2)} €</b> (campaign!, no membership needed)`;
+  } else if (store.price !== null) {
+    priceHtml = `${store.price.toFixed(2)} € (no membership needed)`;
+  } else {
+    priceHtml = `<i>No price yet — be the first to add one!</i>`;
+  }
+  const memberHtml = store.member_price
+    ? `<br>${store.member_price.toFixed(2)} € <i>(requires membership)</i>`
+    : '';
 
-    const popupContent = `
-      <b>${store.name}</b><br>
-      ${store.candy_provider || ''}<br>
-      ${store.address || ''}<br>
-      ${priceHtml}${memberHtml}<br>
-      ${'Wrong price? Update it below!'}
-      <hr>
-
-    <form id="update-form-${store.id}">
-      <label><input type="radio" name="type" value="base" checked> Base price</label>
-      <label><input type="radio" name="type" value="campaign"> Campaign price</label><br>
-      <input type="number" step="0.01" name="price" placeholder="Price (€)" required><br>
-      <div class="campaign-fields" style="display:none;">
-        Start: <input type="date" name="start_date"><br>
-        End: <input type="date" name="end_date"><br>
-        <label><input type="checkbox" name="is_chain_wide"> Chain-wide</label><br>
-        <label><input type="checkbox" name="requires_membership"> Requires membership</label><br>
-      </div>
-      <button type="submit">Update price</button>
-    </form>
+  const header = `
+    <b>${store.name}</b><br>
+    ${store.candy_provider || ''}<br>
+    ${store.address || ''}<br>
   `;
 
-  const marker = L.marker([store.latitude, store.longitude], {
-    icon: (store.is_campaign || store.member_price) ? campaignIcon : normalIcon})
+  let popupContent;
+  if (store.has_loose_candy) {
+    popupContent = `
+      ${header}
+      ${priceHtml}${memberHtml}
+      <hr>
+      <form id="update-form-${store.id}">
+        <label><input type="radio" name="type" value="base" checked> Base price</label>
+        <label><input type="radio" name="type" value="campaign"> Campaign price</label><br>
+        <input type="number" step="0.01" name="price" placeholder="Price (€)" required><br>
+        <div class="campaign-fields" style="display:none;">
+          Start: <input type="date" name="start_date"><br>
+          End: <input type="date" name="end_date"><br>
+          <label><input type="checkbox" name="is_chain_wide"> Chain-wide</label><br>
+          <label><input type="checkbox" name="requires_membership"> Requires membership</label><br>
+        </div>
+        <button type="submit">Update price</button>
+      </form>
+      <hr>
+      <button type="button" id="toggle-candy-${store.id}">This store has no irtokarkit</button>
+    `;
+  } else {
+    popupContent = `
+      ${header}
+      <i>Marked as having no irtokarkit.</i>
+      <hr>
+      <button type="button" id="toggle-candy-${store.id}">This store does have irtokarkit</button>
+    `;
+  }
+
+  const icon = !store.has_loose_candy
+    ? noCandyIcon
+    : (store.is_campaign || store.member_price) ? campaignIcon : normalIcon;
+
+  const marker = L.marker([store.latitude, store.longitude], { icon })
     .addTo(map)
     .bindPopup(popupContent);
 
-  marker.once('popupopen', () => {
+  marker.on('popupopen', () => {
+    // toggle button (exists in both versions of the popup)
+    document.getElementById(`toggle-candy-${store.id}`).addEventListener('click', () => {
+      fetch(`/api/stores/${store.id}/loose-candy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ has_loose_candy: !store.has_loose_candy })
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.error) alert(result.error);
+          else location.reload();
+        });
+    });
+
+    // price form only exists when the store has loose candy
     const form = document.getElementById(`update-form-${store.id}`);
+    if (!form) return;
     const campaignFields = form.querySelector('.campaign-fields');
 
     form.querySelectorAll('input[name="type"]').forEach(radio => {
@@ -115,12 +149,8 @@
       })
         .then(res => res.json())
         .then(result => {
-          if (result.error) {
-            alert(result.error);
-          } else {
-            alert('Price updated!');
-            location.reload();
-          }
+          if (result.error) alert(result.error);
+          else { alert('Price updated!'); location.reload(); }
         });
     });
   });

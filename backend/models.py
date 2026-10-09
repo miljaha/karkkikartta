@@ -13,6 +13,7 @@ class Store(db.Model):
     longitude = db.Column(db.Float, nullable=False)
     candy_provider = db.Column(db.String(100))
     base_price = db.Column(db.Float, nullable=True)
+    has_loose_candy = db.Column(db.Boolean, nullable=False, default=True)
     base_updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 
@@ -37,3 +38,10 @@ class PriceUpdate(db.Model):
     submitted_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     is_chain_wide = db.Column(db.Boolean, default=False)
     requires_membership = db.Column(db.Boolean, default=False)
+
+
+class AvailabilityUpdate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    store_id = db.Column(db.Integer, db.ForeignKey("store.id"), nullable=False)
+    has_loose_candy = db.Column(db.Boolean, nullable=False)
+    submitted_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))

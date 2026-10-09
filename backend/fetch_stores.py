@@ -3,8 +3,8 @@
 Run this once, then again whenever you want fresh data (e.g. weekly):
     python fetch_stores.py
 """
-import json
 
+import json
 import requests
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -35,7 +35,7 @@ def main():
         tags = element.get("tags", {})
         stores.append(
             {
-                "id": f'{element["type"]}/{element["id"]}',
+                "id": f"{element['type']}/{element['id']}",
                 "lat": point["lat"],
                 "lon": point["lon"],
                 "name": tags.get("name") or tags.get("brand") or "Grocery store",

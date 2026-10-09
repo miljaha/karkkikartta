@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, render_template, request
 from datetime import datetime, date, timezone
-from models import db, Campaign, Store, PriceUpdate
+from models import db, Campaign, Store, PriceUpdate, AvailabilityUpdate
 from prices import price_summary
 
 app = Flask(__name__)
@@ -68,6 +68,21 @@ def home():
     return render_template("index.html")
 
 
+@app.route("/api/stores/<int:store_id>/loose-candy", methods=["POST"])
+def set_loose_candy(store_id):
+    store = Store.query.get_or_404(store_id)
+    data = request.get_json()
+
+    value = data.get("has_loose_candy")
+    if not isinstance(value, bool):
+        return jsonify({"error": "has_loose_candy must be true or false"}), 400
+
+    store.has_loose_candy = value
+    db.session.add(AvailabilityUpdate(store_id=store.id, has_loose_candy=value))
+    db.session.commit()
+    return jsonify({"has_loose_candy": store.has_loose_candy})
+
+
 @app.route("/api/stores")
 def api_stores():
     stores = Store.query.all()
@@ -87,6 +102,7 @@ def api_stores():
                 "price": summary["price"],
                 "is_campaign": summary["is_campaign"],
                 "member_price": summary["member_price"],
+                "has_loose_candy": store.has_loose_candy,
             }
         )
     return jsonify(result)
