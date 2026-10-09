@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template, request
 from datetime import datetime, date, timezone
 from models import db, Campaign, Store, PriceUpdate, AvailabilityUpdate
 from prices import price_summary
+from providers import default_provider
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///candy.db"
@@ -78,6 +79,7 @@ def set_loose_candy(store_id):
         return jsonify({"error": "has_loose_candy must be true or false"}), 400
 
     store.has_loose_candy = value
+    store.candy_provider = default_provider(store.chain) if value else None
     db.session.add(AvailabilityUpdate(store_id=store.id, has_loose_candy=value))
     db.session.commit()
     return jsonify({"has_loose_candy": store.has_loose_candy})

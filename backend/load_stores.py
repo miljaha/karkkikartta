@@ -4,6 +4,7 @@ from collections import Counter
 from app import app
 from models import db, Store
 
+
 DRY_RUN = False  # first run just previews; set to False to actually save
 
 CHAINS = [
